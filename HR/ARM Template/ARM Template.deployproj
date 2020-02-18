@@ -1,0 +1,64 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|AnyCPU">
+      <Configuration>Debug</Configuration>
+      <Platform>AnyCPU</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|AnyCPU">
+      <Configuration>Release</Configuration>
+      <Platform>AnyCPU</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>1acefdca-7d07-41c4-bbd3-5775e76953d7</ProjectGuid>
+  </PropertyGroup>
+  <PropertyGroup>
+    <TargetFrameworkIdentifier>Deployment</TargetFrameworkIdentifier>
+    <TargetFrameworkVersion>1.0</TargetFrameworkVersion>
+    <PrepareForBuildDependsOn>
+    </PrepareForBuildDependsOn>
+  </PropertyGroup>
+  <Import Condition=" Exists('Deployment.targets') " Project="Deployment.targets" />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" />
+  <!-- vertag<:>start tokens<:>maj.min -->
+  <Import Condition=" Exists('$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Deployment\1.1\DeploymentProject.targets') " Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Deployment\1.1\DeploymentProject.targets" />
+  <!-- vertag<:>end -->
+  <ItemGroup>
+    <None Include="Deployment.targets">
+      <Visible>False</Visible>
+    </None>
+    <Content Include="readme.txt" />
+    <None Include="SIT\APIM\apim.json" />
+    <None Include="SIT\APIM\apim.parameters.json" />
+    <None Include="SIT\App Service\WebSite.json" />
+    <None Include="SIT\App Service\WebSite.parameters.json" />
+    <None Include="SIT\ApplicationInsights\ApplicationInsights.json" />
+    <None Include="SIT\ApplicationInsights\ApplicationInsights.parameters.json" />
+    <None Include="SIT\ApplicationInsights\WebTests\WebTest.json" />
+    <None Include="SIT\ApplicationInsights\WebTests\WebTest.parameters.json" />
+    <None Include="SIT\Doc Db\GraphDB.parameters.json" />
+    <None Include="SIT\Doc Db\GraphDB.json" />
+    <None Include="SIT\Doc Db\DocumentDB.json" />
+    <None Include="SIT\Doc Db\DocumentDB.parameters.json" />
+    <None Include="SIT\Function App\auditlogservice.json" />
+    <None Include="SIT\Function App\auditlogservice.parameters.json" />
+    <None Include="SIT\Function App\historyservice.json" />
+    <None Include="SIT\Function App\historyservice.parameters.json" />
+    <None Include="SIT\Function App\userprofilesync.json" />
+    <None Include="SIT\Function App\userprofilesync.parameters.json" />
+    <None Include="SIT\Key Vault\keyvault.json" />
+    <None Include="SIT\Key Vault\keyvault.parameters.json" />
+    <None Include="SIT\RedisCache\RedisCache.json" />
+    <None Include="SIT\RedisCache\RedisCache.parameters.json" />
+    <None Include="SIT\Service Fabric\ServiceFabricCluster.json" />
+    <None Include="SIT\Service Fabric\ServiceFabricCluster.parameters.json" />
+    <None Include="SIT\ServiceBus\servicebus.json" />
+    <None Include="SIT\ServiceBus\servicebus.parameters.json" />
+    <None Include="SIT\Storage accounts\storageaccount.json" />
+    <None Include="SIT\Storage accounts\storageaccount.parameters.json" />
+    <None Include="SIT\TrafficManager\trafficManager.json" />
+    <None Include="SIT\TrafficManager\trafficManager.parameters.json" />
+  </ItemGroup>
+  <Target Name="GetReferenceAssemblyPaths" />
+</Project>

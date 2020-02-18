@@ -1,0 +1,196 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environment": {
+      "type": "string",
+      "defaultValue": "uat"
+    },
+    "APIManagementSku": {
+      "type": "string",
+      "defaultValue": "Developer"
+    },
+    "APIManagementSkuCapacity": {
+      "type": "string",
+      "defaultValue": "1"
+    },
+    "DeployLocation": {
+      "defaultValue": "cus",
+      "type": "string"
+    },
+    "PublisherName": {
+      "type": "string",
+      "defaultValue": "Microsoft"
+    },
+    "PublisherEmail": {
+      "type": "string",
+      "defaultValue": "LexCoreEnggTeam@microsoft.com"
+    },
+    "hostname": {
+      "defaultValue": "api.certification-uat.microsoft.com",
+      "type": "string"
+    },
+    "keyvaultid": {
+      "defaultValue": "https://lexkeyvaultuat-sf.vault.azure.net/secrets/apicertification-uat",
+      "type": "string"
+    },
+    "keyVaultName": {
+      "type": "string",
+      "defaultValue": "LeXKeyVaultUAT-SF",
+      "metadata": {
+        "description": "Name of the vault"
+      }
+    },
+    "ApplicationInsightsName": {
+      "type": "string",
+      "defaultValue": "credmgmtuatai"
+    },
+    "ApplicationInsightsInstrumentationKey": {
+      "type": "string",
+      "defaultValue": "de043c69-e8bb-41f4-844c-3a5bb5ef8bba"
+    },
+    "CommonRgName": {
+      "type": "string",
+      "defaultValue": "RG01-CredentialsManagement-UAT-01-SF"
+    }
+  },
+  "variables": {
+    "location": "[resourceGroup().location]",
+    "APIManagementInstanceName": "[toLower(concat('msmcred-',parameters('DeployLocation'),'-',parameters('environment')))]",
+    "apimServiceIdentityResourceId": "[concat(resourceId('Microsoft.ApiManagement/service', variables('APIManagementInstanceName')),'/providers/Microsoft.ManagedIdentity/Identities/default')]",
+    "appInsightsResourceId": "[concat(resourceId('Microsoft.Insights/components', parameters('ApplicationInsightsName')))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.ApiManagement/service",
+      "apiVersion": "2019-01-01",
+      "name": "[variables('APIManagementInstanceName')]",
+      "location": "[variables('location')]",
+      "sku": {
+        "name": "[parameters('APIManagementSku')]",
+        "capacity": "[parameters('APIManagementSkuCapacity')]"
+      },
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "publisherEmail": "[parameters('PublisherEmail')]",
+        "publisherName": "[parameters('PublisherName')]",
+        "hostnameConfigurations": [
+          {
+            "type": "Proxy",
+            "hostName": "[concat(variables('APIManagementInstanceName'), '.azure-api.net')]",
+            "negotiateClientCertificate": false,
+            "defaultSslBinding": false
+          }
+        ],
+        "customProperties": {
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls10": "False",
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls11": "False",
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Ssl30": "False",
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TripleDes168": "False",
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Tls10": "False",
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Tls11": "False",
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Ssl30": "False",
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Protocols.Server.Http2": "False"
+        },
+        "virtualNetworkType": "None"
+      }
+    },
+    {
+      "apiVersion": "2017-05-10",
+      "name": "apimKeyvaultAccessAdd",
+      "resourceGroup": "[parameters('CommonRgName')]",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', variables('APIManagementInstanceName'))]"
+      ],
+      "properties": {
+        "mode": "incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "resources": [
+            {
+              "type": "Microsoft.KeyVault/vaults/accessPolicies",
+              "name": "[concat(parameters('keyVaultName'), '/add')]",
+              "apiVersion": "2018-02-14",
+              "properties": {
+                "accessPolicies": [
+                  {
+                    "tenantId": "[reference(variables('apimServiceIdentityResourceId'), '2015-08-31-PREVIEW').tenantId]",
+                    "objectId": "[reference(variables('apimServiceIdentityResourceId'), '2015-08-31-PREVIEW').principalId]",
+                    "permissions": {
+                      "secrets": [ "get" ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "apiVersion": "2017-05-10",
+      "name": "apimHostConfiguration",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', variables('APIManagementInstanceName'))]",
+        "apimKeyvaultAccessAdd"
+      ],
+      "properties": {
+        "mode": "incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "resources": [
+            {
+              "type": "Microsoft.ApiManagement/service",
+              "apiVersion": "2019-01-01",
+              "name": "[variables('APIManagementInstanceName')]",
+              "location": "[variables('location')]",
+              "sku": {
+                "name": "[parameters('APIManagementSku')]",
+                "capacity": "[parameters('APIManagementSkuCapacity')]"
+              },
+              "properties": {
+                "publisherEmail": "[parameters('PublisherEmail')]",
+                "publisherName": "[parameters('PublisherName')]",
+                "hostnameConfigurations": [
+                  {
+                    "type": "Proxy",
+                    "hostName": "[parameters('hostname')]",
+                    "negotiateClientCertificate": false,
+                    "defaultSslBinding": true,
+                    "keyVaultId": "[parameters('keyvaultid')]"
+                  }
+                ]
+              },
+              "identity": {
+                "type": "SystemAssigned"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/loggers",
+      "apiVersion": "2019-01-01",
+      "name": "[concat(variables('APIManagementInstanceName'), '/', parameters('ApplicationInsightsName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', variables('APIManagementInstanceName'))]"
+      ],
+      "properties": {
+        "loggerType": "applicationInsights",
+        "credentials": {
+          "instrumentationKey": "[parameters('ApplicationInsightsInstrumentationKey')]"
+        },
+        "isBuffered": true,
+        "resourceId": "[variables('appInsightsResourceId')]"
+      }
+    }
+  ],
+  "outputs": {}
+}
